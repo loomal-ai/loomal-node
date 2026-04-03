@@ -106,6 +106,54 @@ export interface PaginatedLogs {
   nextPageToken?: string
 }
 
+export interface IdentitySummary {
+  identityId: string
+  name: string
+  type: string
+  email: string | null
+  scopes: string[]
+  usageCount: number
+  lastUsedAt: string | null
+  createdAt: string
+}
+
+export interface IdentityDetail extends IdentitySummary {
+  apiKeyPrefix: string
+}
+
+export interface CreateIdentityParams {
+  name: string
+  emailName: string
+  scopes: string[]
+}
+
+export interface CreateIdentityResponse {
+  identityId: string
+  name: string
+  type: string
+  emailAddress: string
+  scopes: string[]
+  apiKeyPrefix: string
+  rawKey: string
+  createdAt: string
+}
+
+export interface RotateKeyResponse {
+  rawKey: string
+  apiKeyPrefix: string
+}
+
+export interface PaginatedIdentities {
+  identities: IdentitySummary[]
+  count: number
+  nextPageToken?: string
+}
+
+export interface SupervisorConfig {
+  apiKey: string
+  baseUrl?: string
+}
+
 export interface VaultList {
   credentials: CredentialMetadata[]
   count: number

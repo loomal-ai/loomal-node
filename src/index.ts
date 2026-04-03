@@ -1,7 +1,9 @@
 export { Mailgent } from "./client"
+export { MailgentSupervisor } from "./supervisor"
 export { MailgentApiError } from "./errors"
 export type {
   MailgentConfig,
+  SupervisorConfig,
   MessageResponse,
   ThreadResponse,
   ThreadDetailResponse,
@@ -9,6 +11,12 @@ export type {
   CredentialMetadata,
   CredentialWithData,
   IdentityResponse,
+  IdentitySummary,
+  IdentityDetail,
+  CreateIdentityParams,
+  CreateIdentityResponse,
+  RotateKeyResponse,
+  PaginatedIdentities,
   ActivityLog,
   LogsStatsResponse,
   TotpResponse,
