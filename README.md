@@ -1,8 +1,8 @@
-# Hivekey Node.js SDK
+# Loomal Node.js SDK
 
-The official Node.js/TypeScript SDK for the [Hivekey API](https://docs.hivekey.ai) -- identity infrastructure for AI agents.
+The official Node.js/TypeScript SDK for the [Loomal API](https://docs.loomal.ai) -- identity infrastructure for AI agents.
 
-[![npm](https://img.shields.io/npm/v/hivekey)](https://www.npmjs.com/package/hivekey)
+[![npm](https://img.shields.io/npm/v/loomal)](https://www.npmjs.com/package/loomal)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 - Zero dependencies (native `fetch`)
@@ -13,33 +13,33 @@ The official Node.js/TypeScript SDK for the [Hivekey API](https://docs.hivekey.a
 ## Installation
 
 ```bash
-npm install hivekey
+npm install loomal
 ```
 
 ## Quick start
 
 ```typescript
-import { Hivekey } from "hivekey";
+import { Loomal } from "loomal";
 
-const client = new Hivekey({ apiKey: "mgent-..." });
+const client = new Loomal({ apiKey: "mgent-..." });
 
 const { messages } = await client.mail.listMessages({ limit: 10 });
 ```
 
 ## Authentication
 
-Create an API key in the [Hivekey Console](https://console.hivekey.ai). Keys are prefixed with `mgent-`.
+Create an API key in the [Loomal Console](https://console.loomal.ai). Keys are prefixed with `mgent-`.
 
 Pass the key directly:
 
 ```typescript
-const client = new Hivekey({ apiKey: "mgent-..." });
+const client = new Loomal({ apiKey: "mgent-..." });
 ```
 
 Or load from an environment variable:
 
 ```typescript
-const client = new Hivekey({ apiKey: process.env.HIVEKEY_API_KEY });
+const client = new Loomal({ apiKey: process.env.LOOMAL_API_KEY });
 ```
 
 ## Usage
@@ -57,7 +57,7 @@ const identity = await client.identity.whoami();
 await client.mail.send({
   to: "recipient@example.com",
   subject: "Hello from my agent",
-  text: "Sent via Hivekey SDK.",
+  text: "Sent via Loomal SDK.",
 });
 
 // Reply to a message
@@ -137,15 +137,15 @@ const domainDoc = await client.did.resolveDomain();
 
 ## Error handling
 
-All API errors are thrown as `HivekeyApiError` with structured fields:
+All API errors are thrown as `LoomalApiError` with structured fields:
 
 ```typescript
-import { Hivekey, HivekeyApiError } from "hivekey";
+import { Loomal, LoomalApiError } from "loomal";
 
 try {
   await client.mail.send({ to: "test@example.com", subject: "Hi", text: "Hello" });
 } catch (e) {
-  if (e instanceof HivekeyApiError) {
+  if (e instanceof LoomalApiError) {
     console.error(e.status);  // HTTP status code
     console.error(e.code);    // API error code
     console.error(e.message); // Human-readable message
@@ -159,7 +159,7 @@ The SDK exports all request and response types:
 
 ```typescript
 import type {
-  HivekeyConfig,
+  LoomalConfig,
   MessageResponse,
   ThreadResponse,
   ThreadDetailResponse,
@@ -175,14 +175,14 @@ import type {
   PaginatedLogs,
   LogsStatsResponse,
   DidDocument,
-} from "hivekey";
+} from "loomal";
 ```
 
 ## Links
 
-- [Documentation](https://docs.hivekey.ai)
-- [Website](https://hivekey.ai)
-- [Console](https://console.hivekey.ai)
+- [Documentation](https://docs.loomal.ai)
+- [Website](https://loomal.ai)
+- [Console](https://console.loomal.ai)
 
 ## License
 

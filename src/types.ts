@@ -83,7 +83,7 @@ export interface TotpResponse {
   remaining: number
 }
 
-export interface HivekeyConfig {
+export interface LoomalConfig {
   apiKey: string
   baseUrl?: string
 }

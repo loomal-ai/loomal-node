@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest"
 import { HttpClient } from "../src/http"
-import { HivekeyApiError } from "../src/errors"
+import { LoomalApiError } from "../src/errors"
 
 describe("HttpClient", () => {
   afterEach(() => vi.restoreAllMocks())
@@ -13,11 +13,11 @@ describe("HttpClient", () => {
     })
     vi.stubGlobal("fetch", mockFetch)
 
-    const http = new HttpClient("https://api.hivekey.ai", "mgent-secret")
+    const http = new HttpClient("https://api.loomal.ai", "mgent-secret")
     await http.get("/v0/whoami")
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://api.hivekey.ai/v0/whoami",
+      "https://api.loomal.ai/v0/whoami",
       expect.objectContaining({
         method: "GET",
         headers: expect.objectContaining({
@@ -27,20 +27,20 @@ describe("HttpClient", () => {
     )
   })
 
-  it("throws HivekeyApiError on 401", async () => {
+  it("throws LoomalApiError on 401", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false,
       status: 401,
       json: () => Promise.resolve({ error: "unauthorized", message: "Invalid API key" }),
     }))
 
-    const http = new HttpClient("https://api.hivekey.ai", "bad-key")
-    await expect(http.get("/v0/whoami")).rejects.toThrow(HivekeyApiError)
+    const http = new HttpClient("https://api.loomal.ai", "bad-key")
+    await expect(http.get("/v0/whoami")).rejects.toThrow(LoomalApiError)
 
     try {
       await http.get("/v0/whoami")
     } catch (e) {
-      const err = e as HivekeyApiError
+      const err = e as LoomalApiError
       expect(err.status).toBe(401)
       expect(err.code).toBe("unauthorized")
     }
@@ -52,7 +52,7 @@ describe("HttpClient", () => {
       status: 204,
     }))
 
-    const http = new HttpClient("https://api.hivekey.ai", "mgent-key")
+    const http = new HttpClient("https://api.loomal.ai", "mgent-key")
     const result = await http.delete("/v0/messages/123")
     expect(result).toBeUndefined()
   })
@@ -65,7 +65,7 @@ describe("HttpClient", () => {
     })
     vi.stubGlobal("fetch", mockFetch)
 
-    const http = new HttpClient("https://api.hivekey.ai", "mgent-key")
+    const http = new HttpClient("https://api.loomal.ai", "mgent-key")
     await http.post("/v0/messages/send", { to: ["a@b.com"], subject: "Hi", text: "Hello" })
 
     expect(mockFetch).toHaveBeenCalledWith(
@@ -85,11 +85,11 @@ describe("HttpClient", () => {
     })
     vi.stubGlobal("fetch", mockFetch)
 
-    const http = new HttpClient("https://api.hivekey.ai/", "mgent-key")
+    const http = new HttpClient("https://api.loomal.ai/", "mgent-key")
     await http.get("/v0/whoami")
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://api.hivekey.ai/v0/whoami",
+      "https://api.loomal.ai/v0/whoami",
       expect.any(Object),
     )
   })

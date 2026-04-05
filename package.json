@@ -1,7 +1,7 @@
 {
-  "name": "hivekey",
+  "name": "loomal",
   "version": "0.2.0",
-  "description": "Official Node.js SDK for the Hivekey API",
+  "description": "Official Node.js SDK for the Loomal API",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
     "test": "vitest run"
   },
   "engines": { "node": ">=18" },
-  "keywords": ["hivekey", "ai", "agent", "email", "mcp", "did", "vault", "sdk"],
+  "keywords": ["loomal", "ai", "agent", "email", "mcp", "did", "vault", "sdk"],
   "license": "MIT",
   "devDependencies": {
     "tsup": "^8.0.0",

@@ -1,4 +1,4 @@
-import { HivekeyApiError } from "./errors"
+import { LoomalApiError } from "./errors"
 
 export class HttpClient {
   private baseUrl: string
@@ -27,7 +27,7 @@ export class HttpClient {
     const data = await res.json().catch(() => ({}))
 
     if (!res.ok) {
-      throw new HivekeyApiError(
+      throw new LoomalApiError(
         res.status,
         data.error || "unknown_error",
         data.message || `Request failed with status ${res.status}`,

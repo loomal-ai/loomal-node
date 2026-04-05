@@ -5,11 +5,11 @@ import { VaultResource } from "./resources/vault"
 import { LogsResource } from "./resources/logs"
 import { DidResource } from "./resources/did"
 import { CalendarResource } from "./resources/calendar"
-import type { HivekeyConfig } from "./types"
+import type { LoomalConfig } from "./types"
 
-const DEFAULT_BASE_URL = "https://api.hivekey.ai"
+const DEFAULT_BASE_URL = "https://api.loomal.ai"
 
-export class Hivekey {
+export class Loomal {
   readonly identity: IdentityResource
   readonly mail: MailResource
   readonly vault: VaultResource
@@ -17,9 +17,9 @@ export class Hivekey {
   readonly did: DidResource
   readonly calendar: CalendarResource
 
-  constructor(config: HivekeyConfig) {
+  constructor(config: LoomalConfig) {
     if (!config.apiKey) {
-      throw new Error("Hivekey API key is required. Pass { apiKey: 'mgent-...' } or set HIVEKEY_API_KEY env var.")
+      throw new Error("Loomal API key is required. Pass { apiKey: 'mgent-...' } or set LOOMAL_API_KEY env var.")
     }
 
     const http = new HttpClient(config.baseUrl || DEFAULT_BASE_URL, config.apiKey)

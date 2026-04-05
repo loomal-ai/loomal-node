@@ -1,8 +1,8 @@
-export { Hivekey } from "./client"
-export { HivekeySupervisor } from "./supervisor"
-export { HivekeyApiError } from "./errors"
+export { Loomal } from "./client"
+export { LoomalSupervisor } from "./supervisor"
+export { LoomalApiError } from "./errors"
 export type {
-  HivekeyConfig,
+  LoomalConfig,
   SupervisorConfig,
   MessageResponse,
   ThreadResponse,

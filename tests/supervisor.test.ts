@@ -1,18 +1,18 @@
 import { describe, it, expect, vi, afterEach } from "vitest"
-import { HivekeySupervisor } from "../src/supervisor"
+import { LoomalSupervisor } from "../src/supervisor"
 
-describe("HivekeySupervisor client", () => {
+describe("LoomalSupervisor client", () => {
   it("throws if no API key provided", () => {
-    expect(() => new HivekeySupervisor({ apiKey: "" })).toThrow("Supervisor API key is required")
+    expect(() => new LoomalSupervisor({ apiKey: "" })).toThrow("Supervisor API key is required")
   })
 
   it("creates client with API key", () => {
-    const client = new HivekeySupervisor({ apiKey: "mgsv-test123" })
+    const client = new LoomalSupervisor({ apiKey: "mgsv-test123" })
     expect(client.identities).toBeDefined()
   })
 
   it("accepts custom base URL", () => {
-    const client = new HivekeySupervisor({ apiKey: "mgsv-test", baseUrl: "http://localhost:3001" })
+    const client = new LoomalSupervisor({ apiKey: "mgsv-test", baseUrl: "http://localhost:3001" })
     expect(client.identities).toBeDefined()
   })
 })
@@ -30,7 +30,7 @@ describe("SupervisorIdentitiesResource", () => {
     })
     vi.stubGlobal("fetch", mockFetch)
 
-    const client = new HivekeySupervisor({ apiKey: "mgsv-test" })
+    const client = new LoomalSupervisor({ apiKey: "mgsv-test" })
     const result = await client.identities.create({ name: "Agent", emailName: "agent", scopes: ["mail:read"] })
 
     expect(result.identityId).toBe("id-123")
@@ -47,7 +47,7 @@ describe("SupervisorIdentitiesResource", () => {
       json: () => Promise.resolve({ identities: [{ identityId: "id-1", name: "Agent" }], count: 1 }),
     }))
 
-    const client = new HivekeySupervisor({ apiKey: "mgsv-test" })
+    const client = new LoomalSupervisor({ apiKey: "mgsv-test" })
     const result = await client.identities.list()
     expect(result.identities).toHaveLength(1)
     expect(result.count).toBe(1)
@@ -59,7 +59,7 @@ describe("SupervisorIdentitiesResource", () => {
       json: () => Promise.resolve({ identityId: "id-123", name: "Agent", apiKeyPrefix: "mgent-abc1" }),
     }))
 
-    const client = new HivekeySupervisor({ apiKey: "mgsv-test" })
+    const client = new LoomalSupervisor({ apiKey: "mgsv-test" })
     const result = await client.identities.get("id-123")
     expect(result.identityId).toBe("id-123")
     expect(result.apiKeyPrefix).toBeDefined()
@@ -68,7 +68,7 @@ describe("SupervisorIdentitiesResource", () => {
   it("delete calls DELETE /v0/platform/identities/:id", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 204 }))
 
-    const client = new HivekeySupervisor({ apiKey: "mgsv-test" })
+    const client = new LoomalSupervisor({ apiKey: "mgsv-test" })
     const result = await client.identities.delete("id-123")
     expect(result).toBeUndefined()
   })
@@ -79,7 +79,7 @@ describe("SupervisorIdentitiesResource", () => {
       json: () => Promise.resolve({ rawKey: "mgent-newkey", apiKeyPrefix: "mgent-newk" }),
     }))
 
-    const client = new HivekeySupervisor({ apiKey: "mgsv-test" })
+    const client = new LoomalSupervisor({ apiKey: "mgsv-test" })
     const result = await client.identities.rotateKey("id-123")
     expect(result.rawKey).toMatch(/^mgent-/)
   })
@@ -91,7 +91,7 @@ describe("SupervisorIdentitiesResource", () => {
     })
     vi.stubGlobal("fetch", mockFetch)
 
-    const client = new HivekeySupervisor({ apiKey: "mgsv-mysecretkey" })
+    const client = new LoomalSupervisor({ apiKey: "mgsv-mysecretkey" })
     await client.identities.list()
 
     expect(mockFetch).toHaveBeenCalledWith(

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, afterEach } from "vitest"
-import { Hivekey } from "../src/client"
+import { Loomal } from "../src/client"
 
 describe("CalendarResource", () => {
   afterEach(() => vi.restoreAllMocks())
 
   it("client has calendar resource", () => {
-    const client = new Hivekey({ apiKey: "mgent-test" })
+    const client = new Loomal({ apiKey: "mgent-test" })
     expect(client.calendar).toBeDefined()
   })
 
@@ -21,7 +21,7 @@ describe("CalendarResource", () => {
     })
     vi.stubGlobal("fetch", mockFetch)
 
-    const client = new Hivekey({ apiKey: "mgent-test" })
+    const client = new Loomal({ apiKey: "mgent-test" })
     const result = await client.calendar.create({
       title: "Meeting", startAt: "2026-04-10T10:00:00Z", endAt: "2026-04-10T11:00:00Z", location: "Zoom",
     })
@@ -39,7 +39,7 @@ describe("CalendarResource", () => {
       json: () => Promise.resolve({ events: [{ eventId: "evt-1", title: "Meeting" }], count: 1 }),
     }))
 
-    const client = new Hivekey({ apiKey: "mgent-test" })
+    const client = new Loomal({ apiKey: "mgent-test" })
     const result = await client.calendar.list()
     expect(result.events).toHaveLength(1)
     expect(result.count).toBe(1)
@@ -52,7 +52,7 @@ describe("CalendarResource", () => {
     })
     vi.stubGlobal("fetch", mockFetch)
 
-    const client = new Hivekey({ apiKey: "mgent-test" })
+    const client = new Loomal({ apiKey: "mgent-test" })
     await client.calendar.list({ from: "2026-04-01", to: "2026-04-30" })
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining("from=2026-04-01"),
@@ -66,7 +66,7 @@ describe("CalendarResource", () => {
       json: () => Promise.resolve({ eventId: "evt-1", title: "Meeting" }),
     }))
 
-    const client = new Hivekey({ apiKey: "mgent-test" })
+    const client = new Loomal({ apiKey: "mgent-test" })
     const result = await client.calendar.get("evt-1")
     expect(result.eventId).toBe("evt-1")
   })
@@ -77,7 +77,7 @@ describe("CalendarResource", () => {
       json: () => Promise.resolve({ eventId: "evt-1", title: "Updated Meeting" }),
     }))
 
-    const client = new Hivekey({ apiKey: "mgent-test" })
+    const client = new Loomal({ apiKey: "mgent-test" })
     const result = await client.calendar.update("evt-1", { title: "Updated Meeting" })
     expect(result.title).toBe("Updated Meeting")
   })
@@ -85,7 +85,7 @@ describe("CalendarResource", () => {
   it("delete calls DELETE /v0/calendar/:id", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 204 }))
 
-    const client = new Hivekey({ apiKey: "mgent-test" })
+    const client = new Loomal({ apiKey: "mgent-test" })
     const result = await client.calendar.delete("evt-1")
     expect(result).toBeUndefined()
   })
@@ -96,7 +96,7 @@ describe("CalendarResource", () => {
       json: () => Promise.resolve({ calendarPublic: true }),
     }))
 
-    const client = new Hivekey({ apiKey: "mgent-test" })
+    const client = new Loomal({ apiKey: "mgent-test" })
     const result = await client.calendar.setPublic(true)
     expect(result.calendarPublic).toBe(true)
   })
