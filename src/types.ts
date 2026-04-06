@@ -149,7 +149,7 @@ export interface PaginatedIdentities {
   nextPageToken?: string
 }
 
-export interface SupervisorConfig {
+export interface PlatformConfig {
   apiKey: string
   baseUrl?: string
 }

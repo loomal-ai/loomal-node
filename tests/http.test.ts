@@ -13,7 +13,7 @@ describe("HttpClient", () => {
     })
     vi.stubGlobal("fetch", mockFetch)
 
-    const http = new HttpClient("https://api.loomal.ai", "mgent-secret")
+    const http = new HttpClient("https://api.loomal.ai", "loid-secret")
     await http.get("/v0/whoami")
 
     expect(mockFetch).toHaveBeenCalledWith(
@@ -21,7 +21,7 @@ describe("HttpClient", () => {
       expect.objectContaining({
         method: "GET",
         headers: expect.objectContaining({
-          Authorization: "Bearer mgent-secret",
+          Authorization: "Bearer loid-secret",
         }),
       }),
     )
@@ -52,7 +52,7 @@ describe("HttpClient", () => {
       status: 204,
     }))
 
-    const http = new HttpClient("https://api.loomal.ai", "mgent-key")
+    const http = new HttpClient("https://api.loomal.ai", "loid-key")
     const result = await http.delete("/v0/messages/123")
     expect(result).toBeUndefined()
   })
@@ -65,7 +65,7 @@ describe("HttpClient", () => {
     })
     vi.stubGlobal("fetch", mockFetch)
 
-    const http = new HttpClient("https://api.loomal.ai", "mgent-key")
+    const http = new HttpClient("https://api.loomal.ai", "loid-key")
     await http.post("/v0/messages/send", { to: ["a@b.com"], subject: "Hi", text: "Hello" })
 
     expect(mockFetch).toHaveBeenCalledWith(
@@ -85,7 +85,7 @@ describe("HttpClient", () => {
     })
     vi.stubGlobal("fetch", mockFetch)
 
-    const http = new HttpClient("https://api.loomal.ai/", "mgent-key")
+    const http = new HttpClient("https://api.loomal.ai/", "loid-key")
     await http.get("/v0/whoami")
 
     expect(mockFetch).toHaveBeenCalledWith(

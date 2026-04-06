@@ -7,7 +7,7 @@ import type {
   RotateKeyResponse,
 } from "../types"
 
-export class SupervisorIdentitiesResource {
+export class PlatformIdentitiesResource {
   constructor(private http: HttpClient) {}
 
   create(params: CreateIdentityParams): Promise<CreateIdentityResponse> {

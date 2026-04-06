@@ -21,19 +21,19 @@ npm install loomal
 ```typescript
 import { Loomal } from "loomal";
 
-const client = new Loomal({ apiKey: "mgent-..." });
+const client = new Loomal({ apiKey: "loid-..." });
 
 const { messages } = await client.mail.listMessages({ limit: 10 });
 ```
 
 ## Authentication
 
-Create an API key in the [Loomal Console](https://console.loomal.ai). Keys are prefixed with `mgent-`.
+Create an API key in the [Loomal Console](https://console.loomal.ai). Keys are prefixed with `loid-`.
 
 Pass the key directly:
 
 ```typescript
-const client = new Loomal({ apiKey: "mgent-..." });
+const client = new Loomal({ apiKey: "loid-..." });
 ```
 
 Or load from an environment variable:

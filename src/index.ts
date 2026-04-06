@@ -1,9 +1,9 @@
 export { Loomal } from "./client"
-export { LoomalSupervisor } from "./supervisor"
+export { LoomalPlatform } from "./platform"
 export { LoomalApiError } from "./errors"
 export type {
   LoomalConfig,
-  SupervisorConfig,
+  PlatformConfig,
   MessageResponse,
   ThreadResponse,
   ThreadDetailResponse,
