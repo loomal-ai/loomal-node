@@ -7,6 +7,7 @@ import type {
   CredentialMetadata,
   CredentialWithData,
   ShippingAddressData,
+  TotpBackupResponse,
   TotpResponse,
   VaultCredentialType,
   VaultList,
@@ -102,5 +103,14 @@ export class VaultResource {
 
   totp(name: string): Promise<TotpResponse> {
     return this.http.get<TotpResponse>(`/v0/vault/${encodeURIComponent(name)}/totp`)
+  }
+
+  /**
+   * Atomically consume one single-use TOTP backup code. The popped code is
+   * moved server-side from `data.backupCodes` into `data.usedBackupCodes`
+   * (audit trail) and returned. Use when the live TOTP is unavailable.
+   */
+  totpUseBackup(name: string): Promise<TotpBackupResponse> {
+    return this.http.post<TotpBackupResponse>(`/v0/vault/${encodeURIComponent(name)}/totp/backup`, undefined)
   }
 }

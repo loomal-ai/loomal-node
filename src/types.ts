@@ -120,6 +120,15 @@ export interface LogsStatsResponse {
 export interface TotpResponse {
   code: string
   remaining: number
+  /** Count of single-use TOTP backup codes still stored. Use `vault.totpUseBackup` to consume one. */
+  backupCodesRemaining?: number
+}
+
+export interface TotpBackupResponse {
+  /** The consumed backup code. Single-use — never returned again. */
+  code: string
+  /** Backup codes still unused after this call. */
+  remaining: number
 }
 
 export interface LoomalConfig {
