@@ -28,7 +28,46 @@ export interface ThreadDetailResponse extends ThreadResponse {
 
 export type VaultCredentialType =
   | "LOGIN" | "API_KEY" | "OAUTH" | "TOTP" | "SSH_KEY"
-  | "DATABASE" | "SMTP" | "AWS" | "CERTIFICATE" | "CUSTOM"
+  | "DATABASE" | "SMTP" | "AWS" | "CERTIFICATE"
+  | "CARD" | "SHIPPING_ADDRESS" | "CUSTOM"
+
+/** Single API key / secret. */
+export interface ApiKeySecretData {
+  key: string
+}
+
+/** OAuth-style client credentials (client id + secret). */
+export interface ApiKeyClientPairData {
+  clientId: string
+  secret: string
+}
+
+/** Payment card stored as an encrypted credential (not a payment processor). */
+export interface CardData {
+  cardholder: string
+  number: string
+  expMonth: string
+  expYear: string
+  cvc: string
+  zip?: string
+}
+
+export interface CardMetadata {
+  brand?: string
+  last4?: string
+}
+
+/** Shipping / mailing address stored as an encrypted credential. */
+export interface ShippingAddressData {
+  name: string
+  line1: string
+  line2?: string
+  city: string
+  state: string
+  postcode: string
+  country: string
+  phone?: string
+}
 
 export interface CredentialMetadata {
   credentialId: string

@@ -50,9 +50,46 @@ const client = new Loomal({ apiKey: process.env.LOOMAL_API_KEY });
 const identity = await client.identity.whoami();
 ```
 
+### Vault
+
+The vault is password-manager-style encrypted secret storage (AES-256-GCM at rest). Use `client.vault.store()` for arbitrary types, or the typed helpers below.
+
+```typescript
+// Simple API key
+await client.vault.storeApiKey("stripe", "sk_live_...");
+
+// OAuth-style client credentials (client id + secret)
+await client.vault.storeApiKey("twitter", {
+  clientId: "abc123",
+  secret: "def456",
+});
+
+// Credit card (encrypted at rest — this is a secret vault, not a payment processor)
+await client.vault.storeCard("personal-visa", {
+  cardholder: "Jane Doe",
+  number: "4242 4242 4242 4242",
+  expMonth: "12",
+  expYear: "2029",
+  cvc: "123",
+  zip: "94103",
+}, { metadata: { brand: "Visa" } });
+
+// Shipping address
+await client.vault.storeShippingAddress("home", {
+  name: "Autonomous Agent",
+  line1: "1 Demo Way",
+  city: "San Francisco",
+  state: "CA",
+  postcode: "94103",
+  country: "US",
+});
+```
+
+Supported credential types: `LOGIN`, `API_KEY`, `OAUTH`, `TOTP`, `SSH_KEY`, `DATABASE`, `SMTP`, `AWS`, `CERTIFICATE`, `CARD`, `SHIPPING_ADDRESS`, `CUSTOM`.
+
 ### More resources
 
-The SDK also exposes `client.mail`, `client.calendar`, `client.vault`, `client.logs`, and `client.did`. See the full reference at **[docs.loomal.ai](https://docs.loomal.ai)** for request/response shapes, pagination, and end-to-end examples.
+The SDK also exposes `client.mail`, `client.calendar`, `client.logs`, and `client.did`. See the full reference at **[docs.loomal.ai](https://docs.loomal.ai)** for request/response shapes, pagination, and end-to-end examples.
 
 ## Error handling
 
