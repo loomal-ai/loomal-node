@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { verifyWebhook, WebhookVerificationError } from "../src/webhook"
+import { verifyWebhook } from "../src/webhook"
 
 const SECRET = "whsec_test_supersecret"
 
@@ -19,135 +19,30 @@ async function hmacHex(secret: string, data: string): Promise<string> {
 }
 
 describe("verifyWebhook", () => {
-  it("accepts a valid sha256= prefixed signature without timestamp", async () => {
-    const body = '{"event":"payment.settled","id":"pay_42"}'
+  it("returns true on a valid sha256= signature", async () => {
+    const body = '{"event":"payment.received","id":"pay_42"}'
     const sig = await hmacHex(SECRET, body)
 
-    await expect(
-      verifyWebhook(body, { signature: `sha256=${sig}` }, SECRET),
-    ).resolves.toBeUndefined()
+    expect(await verifyWebhook(body, `sha256=${sig}`, SECRET)).toBe(true)
   })
 
-  it("accepts a bare hex signature (no sha256= prefix)", async () => {
-    const body = '{"event":"payment.settled"}'
-    const sig = await hmacHex(SECRET, body)
-
-    await expect(
-      verifyWebhook(body, { signature: sig }, SECRET),
-    ).resolves.toBeUndefined()
-  })
-
-  it("verifies with timestamp using `${ts}.${body}` signed payload", async () => {
-    const ts = "1730000000"
-    const body = '{"event":"payment.settled"}'
-    const sig = await hmacHex(SECRET, `${ts}.${body}`)
-
-    await expect(
-      verifyWebhook(
-        body,
-        { signature: `sha256=${sig}`, timestamp: ts },
-        SECRET,
-        { nowSeconds: 1730000060, toleranceSeconds: 300 },
-      ),
-    ).resolves.toBeUndefined()
-  })
-
-  it("rejects when signature is missing", async () => {
-    await expect(
-      verifyWebhook("{}", { signature: undefined }, SECRET),
-    ).rejects.toMatchObject({
-      name: "WebhookVerificationError",
-      code: "missing_signature",
-    })
-  })
-
-  it("rejects when signature is empty string", async () => {
-    await expect(
-      verifyWebhook("{}", { signature: "" }, SECRET),
-    ).rejects.toMatchObject({ code: "missing_signature" })
-  })
-
-  it("rejects when signature is not hex", async () => {
-    await expect(
-      verifyWebhook("{}", { signature: "sha256=not-hex!!!" }, SECRET),
-    ).rejects.toMatchObject({ code: "invalid_signature" })
-  })
-
-  it("rejects when signature does not match", async () => {
-    const body = '{"event":"payment.settled"}'
+  it("returns false when signature does not match", async () => {
+    const body = '{"event":"payment.received"}'
     const wrong = await hmacHex("different-secret", body)
 
-    await expect(
-      verifyWebhook(body, { signature: `sha256=${wrong}` }, SECRET),
-    ).rejects.toMatchObject({ code: "invalid_signature" })
+    expect(await verifyWebhook(body, `sha256=${wrong}`, SECRET)).toBe(false)
   })
 
-  it("rejects timestamp older than tolerance window", async () => {
-    const ts = "1700000000"
-    const body = '{"event":"payment.settled"}'
-    const sig = await hmacHex(SECRET, `${ts}.${body}`)
-
-    await expect(
-      verifyWebhook(
-        body,
-        { signature: `sha256=${sig}`, timestamp: ts },
-        SECRET,
-        { nowSeconds: 1700001000, toleranceSeconds: 300 },
-      ),
-    ).rejects.toMatchObject({ code: "timestamp_too_old" })
+  it("returns false when signature header is missing", async () => {
+    expect(await verifyWebhook("{}", undefined, SECRET)).toBe(false)
+    expect(await verifyWebhook("{}", null, SECRET)).toBe(false)
+    expect(await verifyWebhook("{}", "", SECRET)).toBe(false)
   })
 
-  it("rejects future timestamp outside tolerance", async () => {
-    const ts = "1800000000"
-    const body = "{}"
-    const sig = await hmacHex(SECRET, `${ts}.${body}`)
-
-    await expect(
-      verifyWebhook(
-        body,
-        { signature: `sha256=${sig}`, timestamp: ts },
-        SECRET,
-        { nowSeconds: 1700000000, toleranceSeconds: 300 },
-      ),
-    ).rejects.toMatchObject({ code: "timestamp_too_old" })
-  })
-
-  it("rejects non-numeric timestamp", async () => {
-    await expect(
-      verifyWebhook(
-        "{}",
-        { signature: "sha256=abc123", timestamp: "not-a-ts" },
-        SECRET,
-      ),
-    ).rejects.toMatchObject({ code: "timestamp_invalid" })
-  })
-
-  it("rejects negative timestamp", async () => {
-    await expect(
-      verifyWebhook(
-        "{}",
-        { signature: "sha256=abc123", timestamp: "-1" },
-        SECRET,
-      ),
-    ).rejects.toMatchObject({ code: "timestamp_invalid" })
-  })
-
-  it("WebhookVerificationError instance carries code", async () => {
-    try {
-      await verifyWebhook("{}", { signature: undefined }, SECRET)
-      expect.fail("expected throw")
-    } catch (e) {
-      expect(e).toBeInstanceOf(WebhookVerificationError)
-      expect((e as WebhookVerificationError).code).toBe("missing_signature")
-    }
-  })
-
-  it("trims whitespace around the signature header value", async () => {
+  it("returns false when signature is missing the sha256= prefix", async () => {
     const body = "{}"
     const sig = await hmacHex(SECRET, body)
 
-    await expect(
-      verifyWebhook(body, { signature: `  sha256=${sig}  ` }, SECRET),
-    ).resolves.toBeUndefined()
+    expect(await verifyWebhook(body, sig, SECRET)).toBe(false)
   })
 })

@@ -8,15 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.1] — 2026-05-07
 
 ### Added
-- `verifyWebhook(rawBody, headers, secret, options?)` exported from
-  `@loomal/sdk/webhook`. HMAC-SHA256 signature check matching Loomal's
-  `X-Loomal-Signature: sha256=<hex>` header. Web Crypto under the hood,
-  so it runs on Node, Bun, Deno, and Cloudflare Workers without
-  platform-specific imports. Optional timestamp replay protection
-  (forward-compat — the current API does not emit a timestamp).
-- `WebhookVerificationError` with discriminated `code`:
-  `missing_signature` | `invalid_signature` | `timestamp_invalid` |
-  `timestamp_too_old`.
+- `verifyWebhook(rawBody, signature, secret)` exported from
+  `@loomal/sdk/webhook`. Matches Loomal's
+  `X-Loomal-Signature: sha256=<hex>` HMAC-SHA256 header. Returns
+  `Promise<boolean>`. Web Crypto under the hood — runs on Node, Bun,
+  Deno, and Cloudflare Workers.
 - `SignedReceipt` and `ReceiptBody` exported from
   `@loomal/sdk/paywall/express` (and the other paywall subpaths via
   `core`). Mirror of the Ed25519-signed payment receipt the API
@@ -47,9 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `tests/paywall-mcp.test.ts` — `PaymentRequiredError` when no
     payment is supplied, handler invocation on success, rebuild-
     challenge fallback, alternative `_meta.paymentHeader` key.
-  - `tests/webhook.test.ts` — sha256= prefix and bare-hex signatures,
-    timestamped replay window, malformed timestamp/signature, constant-
-    time mismatch, whitespace tolerance.
+  - `tests/webhook.test.ts` — happy-path verify, mismatch, missing
+    header, missing `sha256=` prefix.
 
 ## [0.4.0] — 2026-05-06
 

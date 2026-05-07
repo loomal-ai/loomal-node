@@ -90,12 +90,9 @@ shape and webhook configuration.
 
 ### Webhook signature verification
 
-Loomal signs every webhook delivery with HMAC-SHA256 using your project's
-webhook secret. Each delivery includes:
-
-- `X-Loomal-Signature` — `sha256=<hex>` of the raw body
-- `X-Loomal-Event` — event type (e.g. `payment.received`)
-- `X-Loomal-Idempotency-Key` — stable id for de-duplication
+Loomal sends `X-Loomal-Signature: sha256=<hex>` (HMAC-SHA256 of the raw
+request body) and `X-Loomal-Event` / `X-Loomal-Idempotency-Key` for
+event type and de-duplication. Verify before trusting the body:
 
 ```typescript
 import { verifyWebhook } from "@loomal/sdk/webhook";
@@ -104,25 +101,20 @@ app.post(
   "/webhooks/loomal",
   express.raw({ type: "application/json" }),
   async (req, res) => {
-    try {
-      await verifyWebhook(
-        req.body.toString(),
-        { signature: req.header("x-loomal-signature") },
-        process.env.LOOMAL_WEBHOOK_SECRET!,
-      );
-    } catch {
-      return res.status(400).send("invalid signature");
-    }
-    // body is authentic — de-dupe on X-Loomal-Idempotency-Key, then handle
-    // the event (currently `payment.received` is the only event type).
+    const ok = await verifyWebhook(
+      req.body.toString(),
+      req.header("x-loomal-signature"),
+      process.env.LOOMAL_WEBHOOK_SECRET!,
+    );
+    if (!ok) return res.status(400).send("invalid signature");
+
+    // de-dupe on req.header("x-loomal-idempotency-key"), then handle.
+    // Today the only event type is `payment.received`.
   },
 );
 ```
 
-`verifyWebhook` also accepts a `timestamp` header for replay protection
-(`${ts}.${rawBody}` signing scheme, configurable tolerance), kept for
-forward compatibility — the current API does not emit a timestamp. Web
-Crypto under the hood, so the same helper runs on Node, Bun, Deno, and
+Web Crypto under the hood — same helper runs on Node, Bun, Deno, and
 Cloudflare Workers.
 
 ## Authentication

@@ -1,83 +1,31 @@
 /**
- * Webhook signature verifier for Loomal deliveries.
+ * Verify a Loomal webhook signature.
  *
- * Loomal signs each webhook with the project's webhook secret using
- * HMAC-SHA256 over the raw request body, sent as `X-Loomal-Signature:
- * sha256=<hex>`. Each delivery also carries `X-Loomal-Event` and
- * `X-Loomal-Idempotency-Key` for de-duplication. Today the only event
- * type is `payment.received`.
- *
- * `verifyWebhook` additionally accepts an optional `timestamp` header
- * (Unix seconds). When present, the signed payload becomes
- * `${timestamp}.${rawBody}` and the verifier rejects deliveries older
- * than `toleranceSeconds`. The current API does not send a timestamp;
- * the option exists so callers can opt into replay protection later
- * without an SDK upgrade.
- *
- * Uses Web Crypto so the helper runs on Node, Bun, Deno, and
- * Cloudflare Workers without any platform-specific imports.
+ * Loomal sends `X-Loomal-Signature: sha256=<hex>` — an HMAC-SHA256 of
+ * the raw request body using the project's webhook secret. Pass the
+ * raw body bytes the request arrived with (don't re-stringify the JSON).
  *
  *   import { verifyWebhook } from "@loomal/sdk/webhook"
  *
- *   app.post("/webhooks/loomal",
- *     express.raw({ type: "application/json" }),
- *     async (req, res) => {
- *       try {
- *         await verifyWebhook(
- *           req.body.toString(),
- *           { signature: req.header("x-loomal-signature") },
- *           process.env.LOOMAL_WEBHOOK_SECRET!,
- *         )
- *       } catch (e) {
- *         return res.status(400).send("invalid signature")
- *       }
- *       // de-dupe on req.header("x-loomal-idempotency-key"), then handle
- *     })
+ *   const ok = await verifyWebhook(
+ *     rawBody,
+ *     req.header("x-loomal-signature"),
+ *     process.env.LOOMAL_WEBHOOK_SECRET!,
+ *   )
+ *   if (!ok) return res.status(400).send("invalid signature")
+ *
+ * Uses Web Crypto so the same helper runs on Node, Bun, Deno, and
+ * Cloudflare Workers.
  */
+export async function verifyWebhook(
+  rawBody: string,
+  signature: string | null | undefined,
+  secret: string,
+): Promise<boolean> {
+  if (!signature || !signature.startsWith("sha256=")) return false
+  const provided = signature.slice(7).toLowerCase()
+  if (!/^[0-9a-f]+$/.test(provided)) return false
 
-export interface WebhookHeaders {
-  /**
-   * Value of the `loomal-signature` request header. May include the
-   * `sha256=` prefix or be a bare hex digest.
-   */
-  signature?: string | null
-  /**
-   * Value of the `loomal-timestamp` request header (Unix seconds).
-   * If present, replay protection is enabled.
-   */
-  timestamp?: string | null
-}
-
-export interface VerifyWebhookOptions {
-  /**
-   * Maximum age of a signed delivery in seconds. Default 300 (5 min).
-   * Only enforced when a timestamp header is provided.
-   */
-  toleranceSeconds?: number
-  /**
-   * Override the current time for testing. Unix seconds.
-   */
-  nowSeconds?: number
-}
-
-export class WebhookVerificationError extends Error {
-  readonly code:
-    | "missing_signature"
-    | "invalid_signature"
-    | "timestamp_invalid"
-    | "timestamp_too_old"
-
-  constructor(
-    code: WebhookVerificationError["code"],
-    message?: string,
-  ) {
-    super(message ?? code)
-    this.code = code
-    this.name = "WebhookVerificationError"
-  }
-}
-
-async function hmacSha256Hex(secret: string, data: string): Promise<string> {
   const enc = new TextEncoder()
   const key = await crypto.subtle.importKey(
     "raw",
@@ -86,68 +34,18 @@ async function hmacSha256Hex(secret: string, data: string): Promise<string> {
     false,
     ["sign"],
   )
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data))
-  const bytes = new Uint8Array(sig)
-  let hex = ""
-  for (const b of bytes) hex += b.toString(16).padStart(2, "0")
-  return hex
+  const sig = new Uint8Array(
+    await crypto.subtle.sign("HMAC", key, enc.encode(rawBody)),
+  )
+  let expected = ""
+  for (const b of sig) expected += b.toString(16).padStart(2, "0")
+
+  return timingSafeEqual(provided, expected)
 }
 
-function timingSafeEqualHex(a: string, b: string): boolean {
+function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false
-  let result = 0
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
-  }
-  return result === 0
-}
-
-/**
- * Verify an HMAC-SHA256 webhook signature. Throws
- * `WebhookVerificationError` if the signature is missing, malformed,
- * fails to match, or the timestamp is outside the replay window.
- *
- * `rawBody` must be the exact bytes Loomal signed — pass the raw request
- * body, not a re-stringified JSON object.
- */
-export async function verifyWebhook(
-  rawBody: string,
-  headers: WebhookHeaders,
-  secret: string,
-  options: VerifyWebhookOptions = {},
-): Promise<void> {
-  const provided = headers.signature?.trim()
-  if (!provided) {
-    throw new WebhookVerificationError("missing_signature")
-  }
-
-  const sigHex = provided.startsWith("sha256=")
-    ? provided.slice(7)
-    : provided
-  if (!/^[0-9a-fA-F]+$/.test(sigHex)) {
-    throw new WebhookVerificationError(
-      "invalid_signature",
-      "signature is not hex-encoded",
-    )
-  }
-
-  const tsHeader = headers.timestamp?.toString().trim()
-  if (tsHeader) {
-    const ts = Number(tsHeader)
-    if (!Number.isFinite(ts) || ts <= 0) {
-      throw new WebhookVerificationError("timestamp_invalid")
-    }
-    const tolerance = options.toleranceSeconds ?? 300
-    const now = options.nowSeconds ?? Math.floor(Date.now() / 1000)
-    if (Math.abs(now - ts) > tolerance) {
-      throw new WebhookVerificationError("timestamp_too_old")
-    }
-  }
-
-  const signedPayload = tsHeader ? `${tsHeader}.${rawBody}` : rawBody
-  const expected = await hmacSha256Hex(secret, signedPayload)
-
-  if (!timingSafeEqualHex(sigHex.toLowerCase(), expected)) {
-    throw new WebhookVerificationError("invalid_signature")
-  }
+  let r = 0
+  for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return r === 0
 }
