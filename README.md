@@ -1,6 +1,6 @@
 # Loomal Node.js SDK
 
-The official Node.js/TypeScript SDK for the [Loomal API](https://docs.loomal.ai) -- identity infrastructure for AI agents.
+The official Node.js/TypeScript SDK for the [Loomal API](https://docs.loomal.ai) -- identity, mail, vault, calendar, and **Loomal Pay** for AI agents.
 
 [![npm](https://img.shields.io/npm/v/@loomal/sdk)](https://www.npmjs.com/package/@loomal/sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -9,6 +9,7 @@ The official Node.js/TypeScript SDK for the [Loomal API](https://docs.loomal.ai)
 - ESM + CJS dual output
 - Full TypeScript type definitions
 - Node 18+
+- Drop-in **paywall middleware** for Express, Hono, and MCP
 
 ## Installation
 
@@ -25,6 +26,67 @@ const client = new Loomal({ apiKey: "loid-..." });
 
 const { messages } = await client.mail.listMessages({ limit: 10 });
 ```
+
+## Loomal Pay paywall middleware
+
+Charge USDC per call on top of any HTTP handler. The middleware does the
+two-call x402 flow against `api.loomal.ai` for you.
+
+### Express
+
+```typescript
+import express from "express";
+import { requirePayment } from "@loomal/sdk/paywall/express";
+
+const app = express();
+
+app.get(
+  "/api/search",
+  requirePayment({ amount: "0.01" }),
+  (req, res) => res.json({ results: [/* ... */] }),
+);
+```
+
+### Hono
+
+```typescript
+import { Hono } from "hono";
+import { requirePayment } from "@loomal/sdk/paywall/hono";
+
+const app = new Hono();
+
+app.get(
+  "/api/search",
+  requirePayment({ amount: "0.01" }),
+  (c) => c.json({ results: [/* ... */] }),
+);
+```
+
+### MCP server
+
+```typescript
+import { requireToolPayment } from "@loomal/sdk/paywall/mcp";
+
+server.tool(
+  "search",
+  { description: "Paid search" },
+  requireToolPayment({ amount: "0.01" }, async (args) => ({
+    results: [/* ... */],
+  })),
+);
+```
+
+The middleware reads your seller API key from `LOOMAL_API_KEY` (or
+`SELLER_LOOMAL_API_KEY`) by default, or you can pass `apiKey` explicitly:
+
+```typescript
+requirePayment({ amount: "0.01", apiKey: process.env.MY_LOOMAL_KEY });
+```
+
+Settled payments return an Ed25519-signed receipt and an
+[on-chain USDC transfer on Base](https://basescan.org). See the
+[full payments guide](https://docs.loomal.ai/payments) for the protocol
+shape and webhook configuration.
 
 ## Authentication
 

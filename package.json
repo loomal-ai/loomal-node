@@ -1,7 +1,7 @@
 {
   "name": "@loomal/sdk",
-  "version": "0.3.0",
-  "description": "Official Node.js SDK for the Loomal API — identity infrastructure for AI agents",
+  "version": "0.4.0",
+  "description": "Official Node.js SDK for the Loomal API — identity infrastructure for AI agents and Loomal Pay (x402 paywall)",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -15,17 +15,66 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
       }
+    },
+    "./paywall/express": {
+      "import": {
+        "types": "./dist/paywall/express.d.mts",
+        "default": "./dist/paywall/express.mjs"
+      },
+      "require": {
+        "types": "./dist/paywall/express.d.ts",
+        "default": "./dist/paywall/express.js"
+      }
+    },
+    "./paywall/hono": {
+      "import": {
+        "types": "./dist/paywall/hono.d.mts",
+        "default": "./dist/paywall/hono.mjs"
+      },
+      "require": {
+        "types": "./dist/paywall/hono.d.ts",
+        "default": "./dist/paywall/hono.js"
+      }
+    },
+    "./paywall/mcp": {
+      "import": {
+        "types": "./dist/paywall/mcp.d.mts",
+        "default": "./dist/paywall/mcp.mjs"
+      },
+      "require": {
+        "types": "./dist/paywall/mcp.d.ts",
+        "default": "./dist/paywall/mcp.js"
+      }
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
     "prepublishOnly": "npm run build && npm test"
   },
-  "engines": { "node": ">=18" },
-  "keywords": ["loomal", "ai", "agent", "email", "mcp", "did", "vault", "sdk"],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "loomal",
+    "ai",
+    "agent",
+    "email",
+    "mcp",
+    "did",
+    "vault",
+    "sdk",
+    "x402",
+    "paywall",
+    "usdc",
+    "payments"
+  ],
   "license": "MIT",
   "author": "Loomal",
   "homepage": "https://loomal.ai",
@@ -39,7 +88,16 @@
   "publishConfig": {
     "access": "public"
   },
+  "peerDependencies": {
+    "express": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@types/express": "^4.17.25",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^2.0.0"
