@@ -166,6 +166,52 @@ describe("paywall/express", () => {
     expect(next).not.toHaveBeenCalled()
   })
 
+  it("rebuilds a fresh challenge when redeem.ok=false omits requirement", async () => {
+    // Real API behavior on payTo_mismatch / amount_mismatch: returns
+    // `{ ok: false, stage, reason }` with NO `requirement` field. The
+    // adapter must fetch a fresh challenge so the buyer can retry.
+    const fetchMock = vi.fn()
+      // First call: redeem returns ok=false without requirement
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            ok: false,
+            stage: "verify",
+            reason: "payTo_mismatch",
+          }),
+        text: () => Promise.resolve(""),
+      })
+      // Second call: rebuilt challenge
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(CHALLENGE_BODY),
+        text: () => Promise.resolve(JSON.stringify(CHALLENGE_BODY)),
+      })
+    vi.stubGlobal("fetch", fetchMock)
+
+    const middleware = requirePayment({ amount: "0.05" })
+    const req = makeReq({ xPayment: "stale-blob" })
+    const res = makeRes()
+    const next = vi.fn()
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await middleware(req as any, res as any, next as any)
+
+    expect(res.statusCode).toBe(402)
+    expect(res.body).toEqual(CHALLENGE_BODY)
+    expect(next).not.toHaveBeenCalled()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.loomal.ai/v0/payments/redeem",
+    )
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      "https://api.loomal.ai/v0/payments/challenge",
+    )
+  })
+
   it("returns 502 with error body when Loomal call throws", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("connect ETIMEDOUT")))
 

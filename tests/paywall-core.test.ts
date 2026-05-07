@@ -195,6 +195,82 @@ describe("paywall/core", () => {
       }
     })
 
+    it("returns ok=false without requirement when API omits it", async () => {
+      // payTo_mismatch / amount_mismatch responses lack `requirement`.
+      // The core function should pass that shape through verbatim — the
+      // adapter is responsible for rebuilding a challenge.
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          jsonRes({
+            ok: false,
+            stage: "verify",
+            reason: "payTo_mismatch",
+          }),
+        ),
+      )
+
+      const result = await verifyAndSettle(
+        { apiKey: "loid-k" },
+        "https://x.dev/q",
+        "blob",
+        { amount: "0.01" },
+      )
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.stage).toBe("verify")
+        expect(result.reason).toBe("payTo_mismatch")
+        expect(result.requirement).toBeUndefined()
+      }
+    })
+
+    it("surfaces signedReceipt and recordingFailed on success", async () => {
+      // Real API includes these on the success branch; the SDK type now
+      // exposes them as optional fields.
+      const settled = {
+        ok: true,
+        paymentResponse: "x",
+        txHash: "0xdeadbeef",
+        payer: "0xfeedface00000000000000000000000000000000",
+        paymentInId: null, // API may return null when DB recording fails
+        signedReceipt: {
+          body: {
+            version: 1,
+            paymentInId: "p_x",
+            endpointId: null,
+            identityId: "id_x",
+            payerAddress: "0xfeedface00000000000000000000000000000000",
+            recipientAddress: "0xabc1230000000000000000000000000000000000",
+            amountUsdcRaw: "10000",
+            network: "base",
+            txHash: "0xdeadbeef",
+            timestamp: "2026-05-07T12:00:00.000Z",
+          },
+          signature: "base64sig==",
+          publicKeyHex: "ab".repeat(32),
+          alg: "Ed25519" as const,
+        },
+        recordingFailed: true,
+      }
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonRes(settled)))
+
+      const result = await verifyAndSettle(
+        { apiKey: "loid-k" },
+        "https://x.dev/q",
+        "blob",
+        { amount: "0.01" },
+      )
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.paymentInId).toBeNull()
+        expect(result.recordingFailed).toBe(true)
+        expect(result.signedReceipt?.alg).toBe("Ed25519")
+        expect(result.signedReceipt?.body.amountUsdcRaw).toBe("10000")
+      }
+    })
+
     it("uses route resource override on settle when set", async () => {
       const fetchMock = vi.fn().mockResolvedValue(
         jsonRes({

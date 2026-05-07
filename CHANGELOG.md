@@ -9,28 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `verifyWebhook(rawBody, headers, secret, options?)` exported from
-  `@loomal/sdk/webhook`. HMAC-SHA256 signature check for Loomal webhook
-  deliveries. Web Crypto under the hood, so it runs on Node, Bun, Deno,
-  and Cloudflare Workers without platform-specific imports. Optional
-  `loomal-timestamp` replay protection with a configurable tolerance.
+  `@loomal/sdk/webhook`. HMAC-SHA256 signature check matching Loomal's
+  `X-Loomal-Signature: sha256=<hex>` header. Web Crypto under the hood,
+  so it runs on Node, Bun, Deno, and Cloudflare Workers without
+  platform-specific imports. Optional timestamp replay protection
+  (forward-compat — the current API does not emit a timestamp).
 - `WebhookVerificationError` with discriminated `code`:
   `missing_signature` | `invalid_signature` | `timestamp_invalid` |
   `timestamp_too_old`.
+- `SignedReceipt` and `ReceiptBody` exported from
+  `@loomal/sdk/paywall/express` (and the other paywall subpaths via
+  `core`). Mirror of the Ed25519-signed payment receipt the API
+  attaches to a successful `POST /v0/payments/redeem`.
+
+### Fixed
+- Adapters now rebuild a fresh challenge when Loomal's redeem response
+  returns `ok: false` without a `requirement` field (real API behavior
+  on `payTo_mismatch` and `amount_mismatch`). Previously the middleware
+  emitted a 402 with an empty body, leaving the buyer's x402 client
+  with nothing to retry against.
+- `RedeemResponse` types now match the API: `paymentInId` is
+  `string | null`, `signedReceipt` and `recordingFailed` are exposed on
+  the success branch, and `requirement` is optional on failure.
 
 ### Tests
 - Added unit coverage for the paywall surface that shipped untested in
   `0.4.0`:
   - `tests/paywall-core.test.ts` — `buildChallenge`, `verifyAndSettle`,
     env var resolution (`LOOMAL_API_KEY`, `SELLER_LOOMAL_API_KEY`,
-    `LOOMAL_BASE_URL`), API-key validation, error propagation.
+    `LOOMAL_BASE_URL`), API-key validation, error propagation,
+    `signedReceipt` + nullable `paymentInId`, `ok: false` without
+    `requirement`.
   - `tests/paywall-express.test.ts` — 402 challenge path, settle success
     with `X-Payment-Response` header + `next()`, 402 retry on failure,
-    502 fallback on Loomal outage.
-  - `tests/paywall-hono.test.ts` — same four scenarios on the Hono
-    adapter.
+    rebuild-challenge fallback, 502 on Loomal outage.
+  - `tests/paywall-hono.test.ts` — same scenarios on the Hono adapter.
   - `tests/paywall-mcp.test.ts` — `PaymentRequiredError` when no
-    payment is supplied, handler invocation on success, alternative
-    `_meta.paymentHeader` key.
+    payment is supplied, handler invocation on success, rebuild-
+    challenge fallback, alternative `_meta.paymentHeader` key.
   - `tests/webhook.test.ts` — sha256= prefix and bare-hex signatures,
     timestamped replay window, malformed timestamp/signature, constant-
     time mismatch, whitespace tolerance.

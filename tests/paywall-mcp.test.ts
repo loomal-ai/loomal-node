@@ -111,6 +111,41 @@ describe("paywall/mcp", () => {
     expect(handler).not.toHaveBeenCalled()
   })
 
+  it("rebuilds a fresh challenge when redeem.ok=false omits requirement", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            ok: false,
+            stage: "verify",
+            reason: "payTo_mismatch",
+          }),
+        text: () => Promise.resolve(""),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(CHALLENGE_BODY),
+        text: () => Promise.resolve(JSON.stringify(CHALLENGE_BODY)),
+      })
+    vi.stubGlobal("fetch", fetchMock)
+
+    const handler = vi.fn()
+    const wrapped = requireToolPayment({ amount: "0.05" }, handler)
+
+    try {
+      await wrapped({ q: "x" }, { _meta: { "x-payment": "stale-blob" } })
+      expect.fail("expected PaymentRequiredError")
+    } catch (err) {
+      expect(err).toBeInstanceOf(PaymentRequiredError)
+      expect((err as PaymentRequiredError).challenge).toEqual(CHALLENGE_BODY)
+    }
+    expect(handler).not.toHaveBeenCalled()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
   it("reads payment header from _meta.paymentHeader as fallback", async () => {
     const settled = {
       ok: true,

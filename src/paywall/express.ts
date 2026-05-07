@@ -44,7 +44,13 @@ export function requirePayment(options: ExpressPaywallOptions) {
 
       const redeem = await verifyAndSettle(config, resource, xPayment, routeOptions)
       if (!redeem.ok) {
-        res.status(402).json(redeem.requirement)
+        // Loomal omits `requirement` on a few rejection stages (payTo /
+        // amount mismatch). Rebuild so the buyer always has a challenge
+        // body to retry against.
+        const body =
+          redeem.requirement ??
+          (await buildChallenge(config, resource, routeOptions))
+        res.status(402).json(body)
         return
       }
 

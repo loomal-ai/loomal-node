@@ -50,7 +50,13 @@ export function requirePayment(options: HonoPaywallOptions) {
 
       const redeem = await verifyAndSettle(config, resource, xPayment, routeOptions)
       if (!redeem.ok) {
-        return c.json(redeem.requirement, 402)
+        // Loomal omits `requirement` on a few rejection stages (payTo /
+        // amount mismatch). Rebuild so the buyer always has a challenge
+        // body to retry against.
+        const body =
+          redeem.requirement ??
+          (await buildChallenge(config, resource, routeOptions))
+        return c.json(body, 402)
       }
 
       c.header("X-Payment-Response", redeem.paymentResponse)

@@ -91,7 +91,11 @@ shape and webhook configuration.
 ### Webhook signature verification
 
 Loomal signs every webhook delivery with HMAC-SHA256 using your project's
-webhook secret. Verify it before trusting the body:
+webhook secret. Each delivery includes:
+
+- `X-Loomal-Signature` — `sha256=<hex>` of the raw body
+- `X-Loomal-Event` — event type (e.g. `payment.received`)
+- `X-Loomal-Idempotency-Key` — stable id for de-duplication
 
 ```typescript
 import { verifyWebhook } from "@loomal/sdk/webhook";
@@ -103,23 +107,23 @@ app.post(
     try {
       await verifyWebhook(
         req.body.toString(),
-        {
-          signature: req.header("loomal-signature"),
-          timestamp: req.header("loomal-timestamp"),
-        },
+        { signature: req.header("x-loomal-signature") },
         process.env.LOOMAL_WEBHOOK_SECRET!,
       );
     } catch {
       return res.status(400).send("invalid signature");
     }
-    // body is authentic — handle the event
+    // body is authentic — de-dupe on X-Loomal-Idempotency-Key, then handle
+    // the event (currently `payment.received` is the only event type).
   },
 );
 ```
 
-Replay protection is on whenever a `loomal-timestamp` header is present
-(default tolerance: 5 minutes). Web Crypto under the hood, so the same
-helper runs on Node, Bun, Deno, and Cloudflare Workers.
+`verifyWebhook` also accepts a `timestamp` header for replay protection
+(`${ts}.${rawBody}` signing scheme, configurable tolerance), kept for
+forward compatibility — the current API does not emit a timestamp. Web
+Crypto under the hood, so the same helper runs on Node, Bun, Deno, and
+Cloudflare Workers.
 
 ## Authentication
 

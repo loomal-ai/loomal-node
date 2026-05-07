@@ -135,6 +135,39 @@ describe("paywall/hono", () => {
     expect(next).not.toHaveBeenCalled()
   })
 
+  it("rebuilds a fresh challenge when redeem.ok=false omits requirement", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            ok: false,
+            stage: "verify",
+            reason: "amount_mismatch",
+          }),
+        text: () => Promise.resolve(""),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(CHALLENGE_BODY),
+        text: () => Promise.resolve(JSON.stringify(CHALLENGE_BODY)),
+      })
+    vi.stubGlobal("fetch", fetchMock)
+
+    const middleware = requirePayment({ amount: "0.05" })
+    const ctx = makeContext({ xPayment: "stale-blob" })
+    const next = vi.fn().mockResolvedValue(undefined)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await middleware(ctx as any, next)
+
+    expect(ctx.json).toHaveBeenCalledWith(CHALLENGE_BODY, 402)
+    expect(next).not.toHaveBeenCalled()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
   it("returns 502 error body when Loomal call throws", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")))
 

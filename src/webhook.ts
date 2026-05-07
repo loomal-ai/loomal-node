@@ -2,10 +2,17 @@
  * Webhook signature verifier for Loomal deliveries.
  *
  * Loomal signs each webhook with the project's webhook secret using
- * HMAC-SHA256. The signature header looks like `sha256=<hex>`. When a
- * `loomal-timestamp` header is present, the signed payload is
- * `${timestamp}.${rawBody}` and Loomal sends the timestamp so receivers
- * can reject replayed deliveries older than `toleranceSeconds`.
+ * HMAC-SHA256 over the raw request body, sent as `X-Loomal-Signature:
+ * sha256=<hex>`. Each delivery also carries `X-Loomal-Event` and
+ * `X-Loomal-Idempotency-Key` for de-duplication. Today the only event
+ * type is `payment.received`.
+ *
+ * `verifyWebhook` additionally accepts an optional `timestamp` header
+ * (Unix seconds). When present, the signed payload becomes
+ * `${timestamp}.${rawBody}` and the verifier rejects deliveries older
+ * than `toleranceSeconds`. The current API does not send a timestamp;
+ * the option exists so callers can opt into replay protection later
+ * without an SDK upgrade.
  *
  * Uses Web Crypto so the helper runs on Node, Bun, Deno, and
  * Cloudflare Workers without any platform-specific imports.
@@ -16,14 +23,15 @@
  *     express.raw({ type: "application/json" }),
  *     async (req, res) => {
  *       try {
- *         await verifyWebhook(req.body.toString(), {
- *           signature: req.header("loomal-signature"),
- *           timestamp: req.header("loomal-timestamp"),
- *         }, process.env.LOOMAL_WEBHOOK_SECRET!)
+ *         await verifyWebhook(
+ *           req.body.toString(),
+ *           { signature: req.header("x-loomal-signature") },
+ *           process.env.LOOMAL_WEBHOOK_SECRET!,
+ *         )
  *       } catch (e) {
  *         return res.status(400).send("invalid signature")
  *       }
- *       // handle event ...
+ *       // de-dupe on req.header("x-loomal-idempotency-key"), then handle
  *     })
  */
 

@@ -80,7 +80,13 @@ export function requireToolPayment<TArgs, TResult>(
 
     const redeem = await verifyAndSettle(config, resource, xPayment, routeOptions)
     if (!redeem.ok) {
-      throw new PaymentRequiredError(redeem.requirement)
+      // Loomal omits `requirement` on a few rejection stages (payTo /
+      // amount mismatch). Rebuild so the agent always sees a challenge
+      // body to retry against.
+      const challengeBody =
+        redeem.requirement ??
+        (await buildChallenge(config, resource, routeOptions))
+      throw new PaymentRequiredError(challengeBody)
     }
 
     return handler(args, extra)
