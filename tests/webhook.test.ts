@@ -46,14 +46,13 @@ describe("verifyWebhook", () => {
     expect(await verifyWebhook(body, sig, SECRET)).toBe(false)
   })
 
-  it("returns false when secret is empty (unset env var foot-gun)", async () => {
-    // Empty secret would otherwise HMAC with an empty key — any
-    // attacker who guesses the secret is empty could forge a signature.
-    const body = "{}"
-    const sigWithEmptyKey = await hmacHex("", body)
+  it("returns false (no throw) when secret is empty", async () => {
+    // Caller passing an unset env var ('' or undefined coerced to '')
+    // must not crash the request handler with a DataError from
+    // Web Crypto's "Zero-length key is not supported".
+    const body = '{"event":"payment.received"}'
+    const anySig = "sha256=" + "ab".repeat(32)
 
-    expect(await verifyWebhook(body, `sha256=${sigWithEmptyKey}`, "")).toBe(
-      false,
-    )
+    expect(await verifyWebhook(body, anySig, "")).toBe(false)
   })
 })

@@ -22,9 +22,10 @@ export async function verifyWebhook(
   signature: string | null | undefined,
   secret: string,
 ): Promise<boolean> {
-  // Reject empty secret outright — otherwise an unset env var would
-  // happily HMAC with an empty key and any attacker who knows that
-  // could forge a signature.
+  // Reject empty secret outright. Web Crypto throws DataError on a
+  // zero-length HMAC key, which would crash the caller's webhook
+  // handler. An unset env var passed straight through ('' or
+  // undefined) is the obvious foot-gun. Fail closed.
   if (!secret) return false
   if (!signature || !signature.startsWith("sha256=")) return false
   const provided = signature.slice(7).toLowerCase()
