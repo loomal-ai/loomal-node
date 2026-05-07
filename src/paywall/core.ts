@@ -34,19 +34,59 @@ export interface ChallengeResponse {
   accepts: PaymentRequirement[]
 }
 
+/** Body of a Loomal-signed payment receipt. JSON-safe. */
+export interface ReceiptBody {
+  version: 1
+  paymentInId: string
+  endpointId: string | null
+  identityId: string
+  payerAddress: string
+  recipientAddress: string
+  /** Decimal-string raw USDC amount (6 decimals). e.g. "50000" = 0.05 USDC. */
+  amountUsdcRaw: string
+  network: string
+  txHash: string
+  /** ISO 8601 timestamp */
+  timestamp: string
+}
+
+/**
+ * Ed25519-signed receipt that proves a payment landed at a specific seller
+ * for a specific amount. Surfaced both on the redeem response and via the
+ * `payment.received` webhook payload. Verifiable offline using `publicKeyHex`.
+ */
+export interface SignedReceipt {
+  body: ReceiptBody
+  /** base64-encoded Ed25519 signature over canonicalJson(body) */
+  signature: string
+  /** raw 32-byte Ed25519 public key, hex-encoded */
+  publicKeyHex: string
+  alg: "Ed25519"
+}
+
 export type RedeemResponse =
   | {
       ok: true
       paymentResponse: string
       txHash: string | null
       payer: `0x${string}`
-      paymentInId: string
+      /** May be null if dashboard recording failed; payment still settled on chain. */
+      paymentInId: string | null
+      /** Cryptographic receipt — present on successful settle. */
+      signedReceipt?: SignedReceipt
+      /** True if on-chain settle succeeded but DB recording failed. */
+      recordingFailed?: boolean
     }
   | {
       ok: false
       stage: "verify" | "settle"
       reason: string
-      requirement: ChallengeResponse
+      /**
+       * Fresh challenge body the buyer can retry against. Loomal omits this
+       * on a few stages (e.g. `payTo_mismatch`, `amount_mismatch`); the SDK
+       * adapters rebuild a challenge when missing.
+       */
+      requirement?: ChallengeResponse
     }
 
 export interface PaywallConfig {
