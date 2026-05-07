@@ -88,6 +88,39 @@ Settled payments return an Ed25519-signed receipt and an
 [full payments guide](https://docs.loomal.ai/payments) for the protocol
 shape and webhook configuration.
 
+### Webhook signature verification
+
+Loomal signs every webhook delivery with HMAC-SHA256 using your project's
+webhook secret. Verify it before trusting the body:
+
+```typescript
+import { verifyWebhook } from "@loomal/sdk/webhook";
+
+app.post(
+  "/webhooks/loomal",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    try {
+      await verifyWebhook(
+        req.body.toString(),
+        {
+          signature: req.header("loomal-signature"),
+          timestamp: req.header("loomal-timestamp"),
+        },
+        process.env.LOOMAL_WEBHOOK_SECRET!,
+      );
+    } catch {
+      return res.status(400).send("invalid signature");
+    }
+    // body is authentic — handle the event
+  },
+);
+```
+
+Replay protection is on whenever a `loomal-timestamp` header is present
+(default tolerance: 5 minutes). Web Crypto under the hood, so the same
+helper runs on Node, Bun, Deno, and Cloudflare Workers.
+
 ## Authentication
 
 Create an API key in the [Loomal Console](https://console.loomal.ai). Keys are prefixed with `loid-`.

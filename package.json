@@ -1,6 +1,6 @@
 {
   "name": "@loomal/sdk",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Official Node.js SDK for the Loomal API — identity infrastructure for AI agents and Loomal Pay (x402 paywall)",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -44,6 +44,16 @@
       "require": {
         "types": "./dist/paywall/mcp.d.ts",
         "default": "./dist/paywall/mcp.js"
+      }
+    },
+    "./webhook": {
+      "import": {
+        "types": "./dist/webhook.d.mts",
+        "default": "./dist/webhook.mjs"
+      },
+      "require": {
+        "types": "./dist/webhook.d.ts",
+        "default": "./dist/webhook.js"
       }
     }
   },
