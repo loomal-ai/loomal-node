@@ -45,4 +45,15 @@ describe("verifyWebhook", () => {
 
     expect(await verifyWebhook(body, sig, SECRET)).toBe(false)
   })
+
+  it("returns false when secret is empty (unset env var foot-gun)", async () => {
+    // Empty secret would otherwise HMAC with an empty key — any
+    // attacker who guesses the secret is empty could forge a signature.
+    const body = "{}"
+    const sigWithEmptyKey = await hmacHex("", body)
+
+    expect(await verifyWebhook(body, `sha256=${sigWithEmptyKey}`, "")).toBe(
+      false,
+    )
+  })
 })

@@ -22,6 +22,10 @@ export async function verifyWebhook(
   signature: string | null | undefined,
   secret: string,
 ): Promise<boolean> {
+  // Reject empty secret outright — otherwise an unset env var would
+  // happily HMAC with an empty key and any attacker who knows that
+  // could forge a signature.
+  if (!secret) return false
   if (!signature || !signature.startsWith("sha256=")) return false
   const provided = signature.slice(7).toLowerCase()
   if (!/^[0-9a-f]+$/.test(provided)) return false
