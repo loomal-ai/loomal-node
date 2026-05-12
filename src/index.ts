@@ -33,5 +33,20 @@ export type {
   PaginatedThreads,
   PaginatedLogs,
   VaultList,
+  PaymentStatus,
+  PaymentEndpointSummary,
+  PaymentSummary,
+  PaymentReceiptBody,
+  PaymentReceipt,
+  PaymentDetail,
+  PaginatedPayments,
 } from "./types"
 export type { DidDocument } from "./resources/did"
+export type { ChallengeParams, RedeemParams } from "./resources/payments"
+export type {
+  ChallengeResponse,
+  RedeemResponse,
+  PaymentRequirement,
+  SignedReceipt,
+  ReceiptBody,
+} from "./paywall/core"
