@@ -252,3 +252,58 @@ export interface EmailRuleResponse {
   value: string
   createdAt: string
 }
+
+export type PaymentStatus = "settled" | "verified" | "failed" | "unpaid_delivered"
+
+export interface PaymentEndpointSummary {
+  id: string
+  urlPattern: string
+  priceUsdc: string
+}
+
+export interface PaymentSummary {
+  id: string
+  endpointId: string | null
+  endpoint: PaymentEndpointSummary | null
+  network: "base"
+  payerAddress: string
+  recipientAddress: string
+  /** Raw USDC units (6 decimals). e.g. "50000" = 0.05 USDC. */
+  amountUsdcRaw: string
+  txHash: string | null
+  status: PaymentStatus
+  resourceUrl: string
+  failureReason: string | null
+  createdAt: string
+  settledAt: string | null
+}
+
+export interface PaymentReceiptBody {
+  version: 1
+  paymentInId: string
+  endpointId: string | null
+  identityId: string
+  payerAddress: string
+  recipientAddress: string
+  amountUsdcRaw: string
+  network: "base"
+  txHash: string
+  timestamp: string
+}
+
+export interface PaymentReceipt {
+  body: PaymentReceiptBody
+  signature: string
+  publicKey: string
+  did: string
+}
+
+export interface PaymentDetail extends PaymentSummary {
+  authorizationNonce: string
+  signedReceipt: PaymentReceipt
+}
+
+export interface PaginatedPayments {
+  payments: PaymentSummary[]
+  count: number
+}

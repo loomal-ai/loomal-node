@@ -5,6 +5,7 @@ import { VaultResource } from "./resources/vault"
 import { LogsResource } from "./resources/logs"
 import { DidResource } from "./resources/did"
 import { CalendarResource } from "./resources/calendar"
+import { PaymentsResource } from "./resources/payments"
 import type { LoomalConfig } from "./types"
 
 const DEFAULT_BASE_URL = "https://api.loomal.ai"
@@ -16,6 +17,7 @@ export class Loomal {
   readonly logs: LogsResource
   readonly did: DidResource
   readonly calendar: CalendarResource
+  readonly payments: PaymentsResource
 
   constructor(config: LoomalConfig) {
     if (!config.apiKey) {
@@ -30,5 +32,6 @@ export class Loomal {
     this.logs = new LogsResource(http)
     this.did = new DidResource(http)
     this.calendar = new CalendarResource(http)
+    this.payments = new PaymentsResource(http)
   }
 }

@@ -5,6 +5,27 @@ All notable changes to `@loomal/sdk` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `loomal.payments` resource on the `Loomal` client. Methods:
+  - `challenge({ amount, resource?, description?, network? })` —
+    `POST /v0/payments/challenge`, returns the x402 402-body.
+  - `redeem({ paymentHeader, resource, amount, network?, description? })` —
+    `POST /v0/payments/redeem`, verifies + settles the buyer-signed payment.
+  - `list({ limit? })` — `GET /v0/payments`, recent payments newest first.
+  - `get(paymentId)` — `GET /v0/payments/:id`, single payment with the
+    full Ed25519-signed receipt.
+- `PaymentSummary`, `PaymentDetail`, `PaymentReceipt`, `PaymentReceiptBody`,
+  `PaymentEndpointSummary`, `PaymentStatus`, `PaginatedPayments`,
+  `ChallengeParams`, `RedeemParams` exported as types.
+
+### Changed (BREAKING)
+- `@loomal/sdk/paywall/mcp` now exports `requirePayment` instead of
+  `requireToolPayment`. The new name matches the Express and Hono
+  adapters. Migration: rename the import — the function signature is
+  unchanged.
+
 ## [0.4.1] — 2026-05-07
 
 ### Added

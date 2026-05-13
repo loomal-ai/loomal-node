@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest"
 import {
-  requireToolPayment,
+  requirePayment,
   PaymentRequiredError,
 } from "../src/paywall/mcp"
 
@@ -43,7 +43,7 @@ describe("paywall/mcp", () => {
     )
 
     const handler = vi.fn().mockResolvedValue({ ok: true })
-    const wrapped = requireToolPayment({ amount: "0.05" }, handler)
+    const wrapped = requirePayment({ amount: "0.05" }, handler)
 
     await expect(wrapped({ q: "x" }, { _meta: {} })).rejects.toBeInstanceOf(
       PaymentRequiredError,
@@ -70,7 +70,7 @@ describe("paywall/mcp", () => {
     )
 
     const handler = vi.fn().mockResolvedValue({ results: ["a", "b"] })
-    const wrapped = requireToolPayment({ amount: "0.05" }, handler)
+    const wrapped = requirePayment({ amount: "0.05" }, handler)
 
     const result = await wrapped(
       { q: "x" },
@@ -99,7 +99,7 @@ describe("paywall/mcp", () => {
     )
 
     const handler = vi.fn()
-    const wrapped = requireToolPayment({ amount: "0.05" }, handler)
+    const wrapped = requirePayment({ amount: "0.05" }, handler)
 
     try {
       await wrapped({ q: "x" }, { _meta: { "x-payment": "bad-blob" } })
@@ -133,7 +133,7 @@ describe("paywall/mcp", () => {
     vi.stubGlobal("fetch", fetchMock)
 
     const handler = vi.fn()
-    const wrapped = requireToolPayment({ amount: "0.05" }, handler)
+    const wrapped = requirePayment({ amount: "0.05" }, handler)
 
     try {
       await wrapped({ q: "x" }, { _meta: { "x-payment": "stale-blob" } })
@@ -163,7 +163,7 @@ describe("paywall/mcp", () => {
     vi.stubGlobal("fetch", fetchMock)
 
     const handler = vi.fn().mockResolvedValue({ ok: true })
-    const wrapped = requireToolPayment({ amount: "0.05" }, handler)
+    const wrapped = requirePayment({ amount: "0.05" }, handler)
 
     await wrapped({ q: "x" }, { _meta: { paymentHeader: "alt-key-blob" } })
 

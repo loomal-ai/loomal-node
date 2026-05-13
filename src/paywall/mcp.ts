@@ -1,12 +1,12 @@
 /**
  * MCP tool wrapper for the Loomal paywall.
  *
- *   import { requireToolPayment } from "@loomal/sdk/paywall/mcp"
+ *   import { requirePayment } from "@loomal/sdk/paywall/mcp"
  *
  *   server.tool(
  *     "search",
  *     { description: "Paid search" },
- *     requireToolPayment({ amount: "0.01" }, async (args) => ({
+ *     requirePayment({ amount: "0.01" }, async (args) => ({
  *       results: [...]
  *     })),
  *   )
@@ -52,7 +52,7 @@ export class PaymentRequiredError extends Error {
   }
 }
 
-export function requireToolPayment<TArgs, TResult>(
+export function requirePayment<TArgs, TResult>(
   options: McpPaywallOptions,
   handler: ToolHandler<TArgs, TResult>,
 ): ToolHandler<TArgs, TResult> {
