@@ -90,17 +90,11 @@ export interface CredentialWithData extends CredentialMetadata {
  * mandates and own the agent infrastructure (inbox, vault, calendar, identity
  * signing) used by autonomous agents.
  *
- * Default scopes attached at create time differ by purpose — branch on this
- * field if your code needs to behave differently per role.
+ * Picked at project creation; BUYER is the default. Default scopes attached
+ * at create time differ by purpose — branch on this field if your code needs
+ * to behave differently per role.
  */
 export type IdentityPurpose = "SELLER" | "BUYER"
-
-/**
- * Default applied client-side when `purpose` is absent from a server response.
- * Matches the Prisma backfill (legacy identities are treated as BUYER) so client
- * code never has to handle a null purpose during the rollout window.
- */
-export const DEFAULT_IDENTITY_PURPOSE: IdentityPurpose = "BUYER"
 
 export interface IdentityResponse {
   identityId: string
@@ -108,7 +102,7 @@ export interface IdentityResponse {
   email: string
   displayName: string
   type: string
-  /** SELLER or BUYER. Defaults to `"BUYER"` on legacy identities created before the split was rolled out (matches the server-side backfill). */
+  /** SELLER or BUYER. Set at project creation; BUYER is the default. */
   purpose: IdentityPurpose
   scopes: string[]
   usageCount: number
@@ -179,7 +173,7 @@ export interface IdentitySummary {
   identityId: string
   name: string
   type: string
-  /** SELLER or BUYER. Defaults to `"BUYER"` on legacy identities created before the split was rolled out (matches the server-side backfill). */
+  /** SELLER or BUYER. Set at project creation; BUYER is the default. */
   purpose: IdentityPurpose
   email: string | null
   scopes: string[]

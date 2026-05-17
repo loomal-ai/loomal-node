@@ -56,7 +56,7 @@ export type {
   MandateCreateParams,
   MandateList,
 } from "./types"
-export { PAYMENT_ERROR_CODES, DEFAULT_IDENTITY_PURPOSE } from "./types"
+export { PAYMENT_ERROR_CODES } from "./types"
 export type { DidDocument } from "./resources/did"
 export type { ChallengeParams, RedeemParams } from "./resources/payments"
 export type {
