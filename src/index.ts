@@ -40,7 +40,21 @@ export type {
   PaymentReceipt,
   PaymentDetail,
   PaginatedPayments,
+  PaymentErrorCode,
+  PaymentError,
+  PaymentsPayParams,
+  PaymentsPaySuccess,
+  PaymentsPayFailure,
+  PaymentsPayResponse,
+  PaymentActivityIn,
+  PaymentActivityOut,
+  PaymentActivityRow,
+  PaymentActivityList,
+  Mandate,
+  MandateCreateParams,
+  MandateList,
 } from "./types"
+export { PAYMENT_ERROR_CODES } from "./types"
 export type { DidDocument } from "./resources/did"
 export type { ChallengeParams, RedeemParams } from "./resources/payments"
 export type {

@@ -56,4 +56,25 @@ export class HttpClient {
   delete<T>(path: string): Promise<T> {
     return this.request<T>("DELETE", path)
   }
+
+  /**
+   * POST that does not throw on 4xx/5xx — returns the parsed JSON body verbatim.
+   * Use for endpoints that encode their own success/failure discriminator in
+   * the body (e.g. `/v0/payments/pay` returns `{ ok, ... }` with status 200,
+   * 402, or 503).
+   */
+  async postUnchecked<T>(path: string, body?: unknown): Promise<T> {
+    const url = `${this.baseUrl}${path}`
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    if (res.status === 204) return undefined as T
+    const data = await res.json().catch(() => ({}))
+    return data as T
+  }
 }
