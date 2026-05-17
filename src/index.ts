@@ -15,7 +15,9 @@ export type {
   ShippingAddressData,
   CredentialMetadata,
   CredentialWithData,
+  IdentityPurpose,
   IdentityResponse,
+
   IdentitySummary,
   IdentityDetail,
   CreateIdentityParams,
