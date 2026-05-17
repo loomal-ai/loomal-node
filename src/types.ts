@@ -84,16 +84,30 @@ export interface CredentialWithData extends CredentialMetadata {
   data: Record<string, unknown>
 }
 
+/**
+ * SELLER projects accept x402 payments on registered endpoints (their server
+ * imports `@loomal/sdk/paywall/*` middleware). BUYER projects spend via
+ * mandates and own the agent infrastructure (inbox, vault, calendar, identity
+ * signing) used by autonomous agents.
+ *
+ * Default scopes attached at create time differ by purpose — branch on this
+ * field if your code needs to behave differently per role.
+ */
+export type IdentityPurpose = "SELLER" | "BUYER"
+
 export interface IdentityResponse {
   identityId: string
   name: string
   email: string
   displayName: string
   type: string
+  /** SELLER or BUYER. May be null on legacy identities created before the split was rolled out. */
+  purpose: IdentityPurpose | null
   scopes: string[]
   usageCount: number
   lastUsedAt: string | null
   createdAt: string
+  wallet: { address: string } | null
 }
 
 export interface ActivityLog {
@@ -158,6 +172,8 @@ export interface IdentitySummary {
   identityId: string
   name: string
   type: string
+  /** SELLER or BUYER. May be null on legacy identities created before the split was rolled out. */
+  purpose: IdentityPurpose | null
   email: string | null
   scopes: string[]
   usageCount: number
@@ -173,12 +189,15 @@ export interface CreateIdentityParams {
   name: string
   emailName: string
   scopes: string[]
+  /** SELLER or BUYER — required at create time. */
+  purpose?: IdentityPurpose
 }
 
 export interface CreateIdentityResponse {
   identityId: string
   name: string
   type: string
+  purpose: IdentityPurpose | null
   emailAddress: string
   scopes: string[]
   apiKeyPrefix: string
