@@ -307,3 +307,157 @@ export interface PaginatedPayments {
   payments: PaymentSummary[]
   count: number
 }
+
+// --- x402 buyer-side: pay() params, error codes, and response shape ---
+
+export const PAYMENT_ERROR_CODES = {
+  MANDATE_NOT_FOUND: "mandate_not_found",
+  MANDATE_EXPIRED: "mandate_expired",
+  MANDATE_REVOKED: "mandate_revoked",
+  MANDATE_DAILY_CAP_EXCEEDED: "mandate_daily_cap_exceeded",
+  MANDATE_PER_CALL_EXCEEDED: "mandate_per_call_exceeded",
+  SESSION_KEY_NOT_INSTALLED: "session_key_not_installed",
+  SESSION_KEY_INSTALL_FAILED: "session_key_install_failed",
+  WALLET_NOT_PROVISIONED: "wallet_not_provisioned",
+  BALANCE_INSUFFICIENT: "balance_insufficient",
+  URL_NOT_X402: "url_not_x402",
+  NETWORK_UNSUPPORTED: "network_unsupported",
+  NETWORK_MISMATCH: "network_mismatch",
+  PAYMENT_RESPONSE_INVALID: "payment_response_invalid",
+  SETTLE_FAILED: "settle_failed",
+  FACILITATOR_UNAVAILABLE: "facilitator_unavailable",
+  PAYMENTS_DISABLED: "payments_disabled",
+  UNAUTHORIZED: "unauthorized",
+} as const
+
+export type PaymentErrorCode =
+  (typeof PAYMENT_ERROR_CODES)[keyof typeof PAYMENT_ERROR_CODES]
+
+export interface PaymentError {
+  code: PaymentErrorCode
+  message: string
+  hint?: string
+  retryAfterMs?: number
+}
+
+export interface PaymentsPayParams {
+  /** Any x402-protected URL. */
+  url: string
+  /** Run mandate + balance checks without signing or moving money. */
+  dryRun?: boolean
+}
+
+export interface PaymentsPaySuccess {
+  ok: true
+  /** HTTP status from the paid endpoint after settlement. */
+  status: number
+  /** Parsed JSON body if the endpoint returned application/json. */
+  content?: unknown
+  /** Raw body if non-JSON. */
+  contentText?: string
+  contentType?: string
+  cost: {
+    /** Decimal USDC, e.g. "0.05". */
+    amountUsdc: string
+    /** Raw USDC units (6 decimals), e.g. "50000". */
+    amountUsdcRaw: string
+    network: string
+  }
+  txHash: string | null
+  payer: string
+  recipient: string
+  resource: string
+  balanceAfter: {
+    usdc: string
+    usdcRaw: string
+  }
+  mandate: {
+    mandateId: string
+    spentTodayUsdcRaw: string
+    dailyCapUsdcRaw: string
+    remainingTodayUsdcRaw: string
+    /** ISO 8601. */
+    validUntil: string
+  }
+  /** Signed receipt from seller, when surfaced. */
+  receipt?: unknown
+}
+
+export interface PaymentsPayFailure extends PaymentError {
+  ok: false
+  resource?: string
+  cost?: { amountUsdc: string; network: string }
+}
+
+export type PaymentsPayResponse = PaymentsPaySuccess | PaymentsPayFailure
+
+// --- Bank-statement-style activity feed (buyer + seller, merged) ---
+
+interface PaymentActivityCommon {
+  id: string
+  network: string
+  /** Raw USDC units (6 decimals), e.g. "50000" = 0.05 USDC. */
+  amountUsdcRaw: string
+  /** Counterparty address. For `in` rows this is the payer; for `out` rows the recipient. */
+  counterparty: string
+  resource: string | null
+  txHash: string | null
+  status: string
+  failureReason: string | null
+  /** ISO 8601. */
+  createdAt: string
+}
+
+export interface PaymentActivityIn extends PaymentActivityCommon {
+  direction: "in"
+  endpointId: string | null
+  endpoint: { id: string; urlPattern: string } | null
+}
+
+export interface PaymentActivityOut extends PaymentActivityCommon {
+  direction: "out"
+  mandateId: string | null
+}
+
+export type PaymentActivityRow = PaymentActivityIn | PaymentActivityOut
+
+export interface PaymentActivityList {
+  activity: PaymentActivityRow[]
+  count: number
+}
+
+// --- Mandates: spend policy attached to a project's wallet ---
+
+export interface MandateCreateParams {
+  /** Max USDC any single call can spend, decimal e.g. "0.10". */
+  maxPerCallUsdc: string
+  /** Max cumulative USDC per UTC day, decimal e.g. "1.00". Must be ≥ `maxPerCallUsdc`. */
+  dailyCapUsdc: string
+  network?: "base"
+  /** ISO 8601. Defaults to 7 days from now. */
+  validUntil?: string
+}
+
+export interface Mandate {
+  mandateId: string
+  identityId: string
+  network: string
+  maxPerCallUsdc: string
+  dailyCapUsdc: string
+  validUntil: string
+  sessionKeyAddress: string
+  onchainInstalled: boolean
+  installTxHash: string | null
+  /** Set when on-chain session-key install failed. Mandate is unusable until reinstalled. */
+  installError: string | null
+  spentTodayUsdc: string
+  remainingTodayUsdc: string
+  totalSpentUsdc: string
+  callCount: number
+  revokedAt: string | null
+  createdAt: string
+}
+
+export interface MandateList {
+  mandates: Mandate[]
+}
