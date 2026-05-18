@@ -5,12 +5,17 @@ import type {
   IdentityDetail,
   PaginatedIdentities,
   RotateKeyResponse,
+  UpdateIdentityParams,
 } from "../types"
 
 export class PlatformIdentitiesResource {
   constructor(private http: HttpClient) {}
 
-  create(params: CreateIdentityParams): Promise<CreateIdentityResponse> {
+  /**
+   * Create an identity. All fields default — `create()` (no args) creates a
+   * BUYER identity with a fresh 3-word slug name and matching inbox.
+   */
+  create(params: CreateIdentityParams = {}): Promise<CreateIdentityResponse> {
     return this.http.post<CreateIdentityResponse>("/v0/platform/identities", params)
   }
 
@@ -26,6 +31,14 @@ export class PlatformIdentitiesResource {
     return this.http.get<IdentityDetail>(`/v0/platform/identities/${encodeURIComponent(identityId)}`)
   }
 
+  /** Rename and/or update scopes. The inbox email address is immutable. */
+  update(identityId: string, params: UpdateIdentityParams): Promise<{ identityId: string; name?: string; scopes?: string[] }> {
+    return this.http.patch<{ identityId: string; name?: string; scopes?: string[] }>(
+      `/v0/platform/identities/${encodeURIComponent(identityId)}`,
+      params,
+    )
+  }
+
   delete(identityId: string): Promise<void> {
     return this.http.delete(`/v0/platform/identities/${encodeURIComponent(identityId)}`)
   }
@@ -34,6 +47,7 @@ export class PlatformIdentitiesResource {
     return this.http.post<RotateKeyResponse>(`/v0/platform/identities/${encodeURIComponent(identityId)}/rotate-key`)
   }
 
+  /** Alias for `update()` with only scope fields — kept for backward compat. */
   updateScopes(identityId: string, params: { addScopes?: string[]; removeScopes?: string[] }): Promise<{ identityId: string; scopes: string[] }> {
     return this.http.patch<{ identityId: string; scopes: string[] }>(`/v0/platform/identities/${encodeURIComponent(identityId)}`, params)
   }

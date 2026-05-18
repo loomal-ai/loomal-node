@@ -187,23 +187,36 @@ export interface IdentityDetail extends IdentitySummary {
 }
 
 export interface CreateIdentityParams {
-  name: string
-  emailName: string
-  scopes: string[]
-  /** SELLER or BUYER — required at create time. */
+  /** SELLER or BUYER. Defaults to BUYER. */
   purpose?: IdentityPurpose
+  /** Display name. If omitted, server picks a fresh 3-word slug (editable later via `update()`). */
+  name?: string
+  /** BUYER-only email prefix override. If omitted, server picks a slug. Ignored for SELLER. */
+  emailName?: string
+  /** Defaults applied per `purpose` if omitted. */
+  scopes?: string[]
 }
 
 export interface CreateIdentityResponse {
   identityId: string
   name: string
   type: string
-  purpose: IdentityPurpose | null
-  emailAddress: string
+  purpose: IdentityPurpose
+  /** `null` for SELLER projects (no inbox). */
+  emailAddress: string | null
   scopes: string[]
   apiKeyPrefix: string
   rawKey: string
   createdAt: string
+}
+
+export interface UpdateIdentityParams {
+  /** New display name. Inbox email address is immutable. */
+  name?: string
+  /** Scopes to add. Server filters to the valid set. */
+  addScopes?: string[]
+  /** Scopes to remove. */
+  removeScopes?: string[]
 }
 
 export interface RotateKeyResponse {

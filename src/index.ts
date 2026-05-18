@@ -22,6 +22,7 @@ export type {
   IdentityDetail,
   CreateIdentityParams,
   CreateIdentityResponse,
+  UpdateIdentityParams,
   RotateKeyResponse,
   PaginatedIdentities,
   CalendarEvent,
